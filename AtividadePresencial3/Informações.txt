@@ -1,0 +1,64 @@
+Tiles Caminháveis:
+
+15 15
+0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 
+0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 
+0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 
+0 0 0 1 1 1 1 1 0 0 0 1 1 1 1 
+1 0 0 1 1 1 0 0 0 0 1 1 1 1 1 
+1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 
+1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 
+1 1 1 1 1 1 0 0 0 0 1 1 1 1 1 
+1 1 1 1 1 1 1 1 0 0 0 0 1 1 1 
+1 1 1 1 1 1 1 1 1 0 0 0 0 0 1 
+1 1 1 0 0 0 0 1 1 0 0 0 0 0 1 
+1 1 1 0 0 0 0 1 1 1 0 0 0 0 1 
+1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 
+1 1 1 0 0 0 1 1 1 1 1 1 1 1 1
+1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 
+
+O número 0 representa os tiles que são água e o número 1 representa os tiles que são terra.
+
+if (t_id == 0) {
+	cout << "Game Over! O cavaleiro caiu na água... Para jogar novamente, pressione espaco." << endl;
+	gameOver = true;
+	cx = -1;
+	cy = -1;
+	return;
+};
+
+Se o cavaleiro pisar em um tile do tipo 0, significa que ele caiu na água.
+
+Posicionamento de Objetos:
+
+Cavaleiro:
+
+tview->computeDrawPosition(cx, cy, tw, th, tx, ty);
+
+cx e cy definem as coordenadas do tile em que o cavaleiro deve ficar, neste caso: 0, 0.
+
+Moedas:
+
+void initializeCoins() {
+	coins.emplace_back(5, 13, true);   
+	coins.emplace_back(12, 12, true);  
+	coins.emplace_back(9, 8, true);    
+	coins.emplace_back(0, 7, true);    
+	coins.emplace_back(11, 0, true);   
+}
+
+tview->computeDrawPosition(cx, cy, tw, th, tx, ty);
+
+Cada moeda possui um cx e um cy diferentes, variando as suas posições no mapa.
+
+Ao enviar dados para o vertex_shader, o ajuste do posicionamento de cada objeto varia.
+
+-Cavaleiro:
+
+glUniform1f(glGetUniformLocation(shader_programme, "tx"), 1.22 + tx);
+glUniform1f(glGetUniformLocation(shader_programme, "ty"), 0.82 + ty);
+
+- Moedas: 
+
+glUniform1f(glGetUniformLocation(shader_programme, "tx"), 1.23f + tx); 
+glUniform1f(glGetUniformLocation(shader_programme, "ty"), 0.78f + ty);

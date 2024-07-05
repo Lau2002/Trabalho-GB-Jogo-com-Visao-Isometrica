@@ -14,9 +14,9 @@ using namespace std;
 
 float fw = 0.25f;
 float fh = 0.25f;
-int frameAtual;
-int acao = 3;
-float offsetx = fw * (float)frameAtual, offsety = fh * (float)acao;
+int currentFrame;
+int action = 3;
+float offsetx = fw * (float)currentFrame, offsety = fh * (float)action;
 int sign = 1;
 float previous = glfwGetTime();
 
@@ -35,11 +35,11 @@ float tileH, tileH2;
 int cx , cy ;
 float tx, ty;
 int collectedCoins;
-bool jogoFinalizado = false;
+bool gameOver = false;
 
 TilemapView* tview = new DiamondView();
 TileMap* tmap = NULL;
-TileMap* collideMap = NULL;
+TileMap* watterMap = NULL;
 
 struct Coin {
 	int cx;
@@ -105,11 +105,11 @@ int loadTexture(unsigned int& texture, const char* filename)
 }
 
 void initializeCoins() {
-	coins.emplace_back(5, 13, true);   // Moeda 1
-	coins.emplace_back(12, 12, true);  // Moeda 2
-	coins.emplace_back(9, 8, true);    // Moeda 3
-	coins.emplace_back(0, 7, true);    // Moeda 4
-	coins.emplace_back(11, 0, true);   // Moeda 5
+	coins.emplace_back(5, 13, true);   
+	coins.emplace_back(12, 12, true);  
+	coins.emplace_back(9, 8, true);    
+	coins.emplace_back(0, 7, true);    
+	coins.emplace_back(11, 0, true);   
 }
 
 
@@ -163,9 +163,9 @@ void moveCharacter(int c, int r, const int direction) {
 	}
 
 
-	if ((c < 0) || (c >= collideMap->getWidth()) || (r < 0) || (r >= collideMap->getHeight())) {
+	if ((c < 0) || (c >= watterMap->getWidth()) || (r < 0) || (r >= watterMap->getHeight())) {
 		cout << "Game Over! O cavaleiro caiu no abismo... Para jogar novamente, pressione espaco." << endl;
-		jogoFinalizado = true;
+		gameOver = true;
 		cx = -1;
 		cy = -1;
 		return; 
@@ -174,7 +174,7 @@ void moveCharacter(int c, int r, const int direction) {
 	if (c == 14 && r == 10) {
 		if (collectedCoins == 5) {
 			cout << "Voce Venceu! O cavaleiro chegou ao seu destino final. Para jogar novamente, pressione espaco." << endl;
-			jogoFinalizado = true;
+			gameOver = true;
 			cx = -1;
 			cy = -1;
 			return;
@@ -184,11 +184,11 @@ void moveCharacter(int c, int r, const int direction) {
 		}
 	}	
 
-	unsigned char t_id = collideMap->getTile(c, r);
+	unsigned char t_id = watterMap->getTile(c, r);
 	
 	if (t_id == 0) {
 		cout << "Game Over! O cavaleiro caiu na agua... Para jogar novamente, pressione espaco." << endl;
-		jogoFinalizado = true;
+		gameOver = true;
 		cx = -1;
 		cy = -1;
 		return;
@@ -199,10 +199,11 @@ void moveCharacter(int c, int r, const int direction) {
 }
 
 void restart() {
-	frameAtual = 0;
-	acao = 3;
+	gameOver = 0;
+	action = 3;
 	collectedCoins = 0;
-	offsetx = fw * (float)frameAtual, offsety = fh * (float)acao;
+	currentFrame = 0;
+	offsetx = fw * (float)currentFrame, offsety = fh * (float)action;
 
 	for (auto& coin : coins) {
 		coin.create = true;
@@ -210,7 +211,7 @@ void restart() {
 	
 	cx = 0;
 	cy = 0;
-	jogoFinalizado = false;
+	gameOver = false;
 }
 
 int main()
@@ -221,8 +222,8 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	tmap = readMap("terrain1.tmap");
-	collideMap = readMap("collide.tmap");
+	tmap = readMap("terrain.tmap");
+	watterMap = readMap("watter.tmap");
 	tw = w / (float)tmap->getWidth();
 	th = tw / 2.0f;
 	tw2 = th;
@@ -238,14 +239,14 @@ int main()
 
 	tmap->setTid(tid);
 
-	GLuint texturaObjeto;
-	loadTexture(texturaObjeto, "character.png");
+	GLuint characterTexture;
+	loadTexture(characterTexture, "character.png");
 
-	GLuint moedaTexture;
-	loadTexture(moedaTexture, "coin.png");
+	GLuint coinTexture;
+	loadTexture(coinTexture, "coin.png");
 
 
-	float verticesCenario[] = {
+	float mapVertices[] = {
 		// positions   // texture coords
 		xi    , yi + th2, 0.0f, tileH2,   // left
 		xi + tw2, yi    , tileW2, 0.0f,   // bottom
@@ -257,14 +258,14 @@ int main()
 		3, 1, 2  // second triangle
 	};
 
-	float verticesObjeto[] = {
+	float characterVertices[] = {
 		 -2.6f * 0.8f, -0.8f * 0.8f, 0.25f, 0.25f, // top right
 		 -2.6f * 0.8f, -1.0f * 0.8f, 0.25f, 0.0f, // bottom right
 		 -2.8f * 0.8f, -1.0f * 0.8f, 0.0f, 0.0f, // bottom left
 		 -2.8f * 0.8f, -0.8f * 0.8f, 0.0f, 0.25f, // top left
 	};
 
-	float verticesMoeda[] = {
+	float coinVertices[] = {
 		 -2.6f * 0.2f, -0.8f * 0.2f, 0.25f, 0.25f, // top right
 		 -2.6f * 0.2f, -1.0f * 0.2f, 0.25f, 0.0f, // bottom right
 		 -2.8f * 0.2f, -1.0f * 0.2f, 0.0f, 0.0f, // bottom left
@@ -272,18 +273,18 @@ int main()
 	};
 
 	
-	unsigned int VBOCenario, VBOObjeto, VBOMoeda, VAO, EBO;
+	unsigned int VBOMap, VBOCharacter, VBOCoin, VAO, EBO;
 	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBOCenario);
-	glGenBuffers(1, &VBOObjeto);
-	glGenBuffers(1, &VBOMoeda);
+	glGenBuffers(1, &VBOMap);
+	glGenBuffers(1, &VBOCharacter);
+	glGenBuffers(1, &VBOCoin);
 	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
 
 	
-	glBindBuffer(GL_ARRAY_BUFFER, VBOCenario);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCenario), verticesCenario, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOMap);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(mapVertices), mapVertices, GL_STATIC_DRAW);
 	
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
@@ -292,8 +293,8 @@ int main()
 	glEnableVertexAttribArray(1);
 
 	
-	glBindBuffer(GL_ARRAY_BUFFER, VBOObjeto);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesObjeto), verticesObjeto, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOCharacter);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(characterVertices), characterVertices, GL_STATIC_DRAW);
 	
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(2);
@@ -302,8 +303,8 @@ int main()
 	glEnableVertexAttribArray(3);
 
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBOMoeda);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(verticesMoeda), verticesMoeda, GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VBOCoin);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(coinVertices), coinVertices, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(4);
@@ -395,8 +396,7 @@ int main()
 
 		double current_seconds = glfwGetTime();
 
-		// wipe the drawing surface clear
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		glViewport(0, 0, g_gl_width, g_gl_height);
@@ -405,7 +405,7 @@ int main()
 
 		glBindVertexArray(VAO);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBOCenario);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOMap);
 		glUniform1f(glGetUniformLocation(shader_programme, "isObject"), false);
 
 		float x, y;
@@ -439,10 +439,10 @@ int main()
 			}
 		}
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBOObjeto);
+		glBindBuffer(GL_ARRAY_BUFFER, VBOCharacter);
 		glUniform1f(glGetUniformLocation(shader_programme, "isObject"), true);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, texturaObjeto);
+		glBindTexture(GL_TEXTURE_2D, characterTexture);
 		glUniform1i(glGetUniformLocation(shader_programme, "sprite"), 0);
 
 
@@ -458,7 +458,7 @@ int main()
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		
-		renderCoins(moedaTexture, shader_programme);
+		renderCoins(coinTexture, shader_programme);
 		
 		glfwPollEvents();
 
@@ -500,18 +500,18 @@ int main()
 		if (ctrlPressed) {
 			if (GLFW_RELEASE == down && downPressed) {
 				moveCharacter(cx, cy, DIRECTION_SOUTHEAST);
-				acao = 2;
-				frameAtual = (frameAtual + 1) % 4;
-				offsetx = fw * (float)frameAtual;
-				offsety = fh * (float)acao;
+				action = 2;
+				currentFrame = (currentFrame + 1) % 4;
+				offsetx = fw * (float)currentFrame;
+				offsety = fh * (float)action;
 				downPressed = false;
 			}
 			else if (GLFW_RELEASE == up && upPressed) {
 				moveCharacter(cx, cy, DIRECTION_NORTHEAST);
-				acao = 2;
-				frameAtual = (frameAtual + 1) % 4;
-				offsetx = fw * (float)frameAtual;
-				offsety = fh * (float)acao;
+				action = 2;
+				currentFrame = (currentFrame + 1) % 4;
+				offsetx = fw * (float)currentFrame;
+				offsety = fh * (float)action;
 				upPressed = false;
 			}
 
@@ -521,18 +521,18 @@ int main()
 		if (shiftPressed) {
 			if (GLFW_RELEASE == down && downPressed) {
 				moveCharacter(cx, cy, DIRECTION_SOUTHWEST);
-				acao = 1;
-				frameAtual = (frameAtual + 1) % 4;
-				offsetx = fw * (float)frameAtual;
-				offsety = fh * (float)acao;
+				action = 1;
+				currentFrame = (currentFrame + 1) % 4;
+				offsetx = fw * (float)currentFrame;
+				offsety = fh * (float)action;
 				downPressed = false;
 			}
 			else if (GLFW_RELEASE == up && upPressed) {
 				moveCharacter(cx, cy, DIRECTION_NORTHWEST);
-				acao = 1;
-				frameAtual = (frameAtual + 1) % 4;
-				offsetx = fw * (float)frameAtual;
-				offsety = fh * (float)acao;
+				action = 1;
+				currentFrame = (currentFrame + 1) % 4;
+				offsetx = fw * (float)currentFrame;
+				offsety = fh * (float)action;
 				upPressed = false;
 			}
 
@@ -541,37 +541,37 @@ int main()
 
 		if (GLFW_RELEASE == up && upPressed) {
 			moveCharacter(cx, cy, DIRECTION_NORTH);
-			acao = 0;
-			frameAtual = (frameAtual + 1) % 4;
-			offsetx = fw * (float)frameAtual;
-			offsety = fh * (float)acao;
+			action = 0;
+			currentFrame = (currentFrame + 1) % 4;
+			offsetx = fw * (float)currentFrame;
+			offsety = fh * (float)action;
 			upPressed = false;
 		}
 
 		if (GLFW_RELEASE == down && downPressed) {
 			moveCharacter(cx, cy, DIRECTION_SOUTH);
-			acao = 3;
-			frameAtual = (frameAtual + 1) % 4;
-			offsetx = fw * (float)frameAtual;
-			offsety = fh * (float)acao;
+			action = 3;
+			currentFrame = (currentFrame + 1) % 4;
+			offsetx = fw * (float)currentFrame;
+			offsety = fh * (float)action;
 			downPressed = false;
 		}
 
 		if (GLFW_RELEASE == left && leftPressed) {
 			moveCharacter(cx, cy, DIRECTION_EAST);
-			acao = 1;
-			frameAtual = (frameAtual + 1) % 4;
-			offsetx = fw * (float)frameAtual;
-			offsety = fh * (float)acao;
+			action = 1;
+			currentFrame = (currentFrame + 1) % 4;
+			offsetx = fw * (float)currentFrame;
+			offsety = fh * (float)action;
 			leftPressed = false;
 		}
 		
 		if (GLFW_RELEASE == right && rightPressed) {
 			moveCharacter(cx, cy, DIRECTION_WEST);
-			acao = 2;
-			frameAtual = (frameAtual + 1) % 4;
-			offsetx = fw * (float)frameAtual;
-			offsety = fh * (float)acao;
+			action = 2;
+			currentFrame = (currentFrame + 1) % 4;
+			offsetx = fw * (float)currentFrame;
+			offsety = fh * (float)action;
 			rightPressed = false;
 		}
 
@@ -585,7 +585,7 @@ int main()
 
 	glfwTerminate();
 	delete tmap;
-	delete collideMap;
+	delete watterMap;
 	return 0;
 }
 

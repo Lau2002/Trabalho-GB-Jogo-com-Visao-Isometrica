@@ -1,11 +1,3 @@
-//
-//  DiamondView.h
-//  ExercDiamondmap
-//
-//  Created by Leandro Tonietto on 09/05/16.
-//  Copyright © 2016 Leandro Tonietto. All rights reserved.
-//
-
 #ifndef DiamondView_h
 #define DiamondView_h
 
